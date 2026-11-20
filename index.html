@@ -1,0 +1,171 @@
+cat << 'EOF' > index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Beautiful Pages — Multi-AI Showcase</title>
+  <style>
+    :root {
+      --bg: #090b10;
+      --panel: #111520;
+      --border: #232a3d;
+      --text: #eef2ff;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.65rem 1rem;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      z-index: 10;
+    }
+    .brand {
+      font-size: 0.9rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+    .brand span { color: var(--accent); }
+    .switcher {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      align-items: center;
+    }
+    .ai-tab {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.35rem 0.7rem;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .ai-tab:hover {
+      color: var(--text);
+      border-color: var(--accent);
+    }
+    .ai-tab[aria-selected="true"] {
+      background: var(--accent);
+      color: #061018;
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+    .meta-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    .meta-actions a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .meta-actions a:hover { text-decoration: underline; }
+    .stage {
+      position: relative;
+      flex: 1 1 auto;
+      width: 100%;
+      height: 100%;
+      background: #000;
+    }
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+      background: #fff;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">PRE-TAVI // <span>BEAUTIFUL PAGES</span></div>
+    <nav class="switcher" id="ai-switcher" aria-label="AI Outputs"></nav>
+    <div class="meta-actions">
+      <span id="active-note"></span>
+      <a id="raw-link" href="./entries/aether-synapse/index.html" target="_blank" rel="noopener noreferrer">Raw page ↗</a>
+    </div>
+  </header>
+
+  <main class="stage">
+    <iframe
+      id="ai-frame"
+      title="Selected AI Output"
+      sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+      loading="eager"
+    ></iframe>
+  </main>
+
+  <script>
+    // Add one entry per AI output folder under ./entries/<slug>/index.html
+    const AI_PAGES = [
+      {
+        slug: "aether-synapse",
+        label: "Gemini (Aether Synapse)",
+        note: "WebGL fluid + 3D Merkle lattice + WebAudio",
+        src: "./entries/aether-synapse/index.html"
+      }
+    ];
+
+    const switcherEl = document.getElementById("ai-switcher");
+    const frameEl = document.getElementById("ai-frame");
+    const noteEl = document.getElementById("active-note");
+    const rawLinkEl = document.getElementById("raw-link");
+
+    function selectPage(slug, updateHash = true) {
+      const page = AI_PAGES.find((item) => item.slug === slug) || AI_PAGES[0];
+      if (!page) return;
+
+      frameEl.src = page.src;
+      noteEl.textContent = page.note || "";
+      rawLinkEl.href = page.src;
+
+      if (updateHash && window.location.hash !== `#${page.slug}`) {
+        history.replaceState(null, "", `#${page.slug}`);
+      }
+
+      Array.from(switcherEl.children).forEach((btn) => {
+        btn.setAttribute("aria-selected", String(btn.dataset.slug === page.slug));
+      });
+    }
+
+    AI_PAGES.forEach((page) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "ai-tab";
+      btn.dataset.slug = page.slug;
+      btn.textContent = page.label;
+      btn.addEventListener("click", () => selectPage(page.slug, true));
+      switcherEl.appendChild(btn);
+    });
+
+    window.addEventListener("hashchange", () => {
+      const hashSlug = window.location.hash.replace(/^#/, "");
+      if (hashSlug) selectPage(hashSlug, false);
+    });
+
+    const initialSlug = window.location.hash.replace(/^#/, "");
+    selectPage(initialSlug, false);
+  </script>
+</body>
+</html>
+EOF

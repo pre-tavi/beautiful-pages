@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ÆTHER — Digital Dreams</title>
+<style>
+  :root{
+    --bg:#050208;
+    --ink:#f2ecff;
+    --pink:#ff3d81;
+    --cyan:#22d3ee;
+    --violet:#8b5cf6;
+    --gold:#ffd166;
+    --mono:'JetBrains Mono','Courier New',monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scrollbar-width:thin;scrollbar-color:var(--violet) var(--bg)}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Space Grotesk',system-ui,sans-serif;
+    overflow-x:hidden;
+    cursor:none;
+  }
+  ::selection{background:var(--pink);color:#fff}
+
+  /* ---------- PRELOADER ---------- */
+  #preloader{
+    position:fixed;inset:0;z-index:1000;
+    background:var(--bg);
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:1.2rem;
+  }
+  #preloader .tag{font-family:var(--mono);font-size:.7rem;letter-spacing:.4em;color:var(--cyan)}
+  #counter{font-family:var(--mono);font-size:clamp(4rem,14vw,9rem);font-weight:700;
+    background:linear-gradient(90deg,var(--pink),var(--violet),var(--cyan));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  #bar{width:min(420px,70vw);height:1px;background:#ffffff18;position:relative;overflow:hidden}
+  #bar i{position:absolute;inset:0;background:linear-gradient(90deg,var(--pink),var(--cyan));transform:scaleX(0);transform-origin:left}
+
+  /* ---------- CUSTOM CURSOR ---------- */
+  #cursor-dot,#cursor-ring{position:fixed;top:0;left:0;pointer-events:none;z-index:999;border-radius:50%}
+  #cursor-dot{width:8px;height:8px;background:var(--ink);mix-blend-mode:difference}
+  #cursor-ring{width:40px;height:40px;border:1px solid var(--ink);mix-blend-mode:difference;
+    transition:width .3s,height .3s,background .3s}
+  #cursor-ring.hovering{width:72px;height:72px;background:#ffffff22}
+
+  /* ---------- NAV ---------- */
+  nav{position:fixed;top:0;left:0;right:0;z-index:100;
+    display:flex;justify-content:space-between;align-items:center;
+    padding:1.4rem clamp(1.2rem,4vw,3.5rem);
+    mix-blend-mode:difference}
+  .logo{font-weight:700;font-size:1.3rem;letter-spacing:.15em}
+  .logo span{color:var(--pink)}
+  nav ul{display:flex;gap:2.4rem;list-style:none}
+  nav a{color:var(--ink);text-decoration:none;font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.25em;text-transform:uppercase;position:relative}
+  nav a::after{content:'';position:absolute;left:0;bottom:-5px;width:100%;height:1px;
+    background:var(--ink);transform:scaleX(0);transform-origin:right;transition:transform .4s cubic-bezier(.76,0,.24,1)}
+  nav a:hover::after{transform:scaleX(1);transform-origin:left}
+
+  /* ---------- HERO ---------- */
+  #hero{position:relative;height:100vh;overflow:hidden;display:flex;
+    align-items:center;justify-content:center}
+  #webgl{position:absolute;inset:0;width:100%;height:100%}
+  .hero-inner{position:relative;z-index:2;text-align:center;mix-blend-mode:screen}
+  .hero-kicker{font-family:var(--mono);font-size:.75rem;letter-spacing:.55em;color:var(--cyan);margin-bottom:1.5rem}
+  h1{font-size:clamp(3.2rem,12vw,10.5rem);line-height:.92;font-weight:800;letter-spacing:-.03em;
+    text-transform:uppercase}
+  h1 .line{display:block;overflow:hidden}
+  h1 .line span{display:inline-block}
+  h1 .stroke{-webkit-text-stroke:1.5px var(--ink);color:transparent}
+  .hero-sub{margin-top:2rem;font-family:var(--mono);font-size:.8rem;color:#ffffff99;letter-spacing:.2em}
+  .scroll-hint{position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);
+    font-family:var(--mono);font-size:.65rem;letter-spacing:.4em;color:#ffffff66;z-index:2}
+  .scroll-hint::after{content:'';display:block;width:1px;height:44px;margin:.8rem auto 0;
+    background:linear-gradient(var(--cyan),transparent);animation:drip 1.8s ease-in-out infinite}
+  @keyframes drip{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}
+    51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+
+  /* ---------- MARQUEE ---------- */
+  .marquee{overflow:hidden;border-top:1px solid #ffffff14;border-bottom:1px solid #ffffff14;
+    padding:1.4rem 0;background:#ffffff05}
+  .marquee-track{display:flex;gap:3rem;white-space:nowrap;width:max-content}
+  .marquee-track span{font-size:1.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;
+    color:transparent;-webkit-text-stroke:1px #ffffff55}
+  .marquee-track span.fill{color:var(--pink);-webkit-text-stroke:0}
+
+  /* ---------- SECTIONS ---------- */
+  section{position:relative;padding:clamp(5rem,12vh,9rem) clamp(1.2rem,6vw,6rem)}
+  .sec-label{font-family:var(--mono);font-size:.7rem;letter-spacing:.5em;color:var(--cyan);margin-bottom:2rem}
+  .sec-label::before{content:'// '}
+
+  .manifesto p{font-size:clamp(1.6rem,4.2vw,3.4rem);line-height:1.25;font-weight:600;max-width:20ch}
+  .manifesto .w{display:inline-block;opacity:.12;transition:none}
+  .manifesto em{font-style:normal;color:var(--pink)}
+  .manifesto u{text-decoration:none;color:var(--cyan)}
+
+  /* ---------- WORK: horizontal scroll ---------- */
+  #work{padding-left:0;padding-right:0}
+  #work .head{padding:0 clamp(1.2rem,6vw,6rem)}
+  .hscroll{display:flex;gap:2.5rem;padding:3rem clamp(1.2rem,6vw,6rem);width:max-content;align-items:stretch}
+  .card{width:min(420px,78vw);flex-shrink:0;border-radius:18px;padding:2rem;position:relative;
+    background:linear-gradient(160deg,#ffffff0d,#ffffff03);
+    border:1px solid #ffffff14;backdrop-filter:blur(10px);
+    transform-style:preserve-3d;transition:border-color .3s;will-change:transform}
+  .card:hover{border-color:var(--pink)}
+  .card .num{font-family:var(--mono);font-size:.7rem;color:var(--cyan);letter-spacing:.3em}
+  .card .art{height:230px;border-radius:12px;margin:1.4rem 0;position:relative;overflow:hidden}
+  .card .art::after{content:'';position:absolute;inset:0;
+    background:radial-gradient(circle at 30% 30%,#ffffff2a,transparent 60%)}
+  .card h3{font-size:1.5rem;margin-bottom:.6rem}
+  .card p{font-family:var(--mono);font-size:.75rem;color:#ffffff88;line-height:1.7}
+  .g1{background:conic-gradient(from 200deg at 50% 50%,#ff3d81,#8b5cf6,#22d3ee,#ff3d81)}
+  .g2{background:conic-gradient(from 40deg at 60% 40%,#ffd166,#ff3d81,#050208,#ffd166)}
+  .g3{background:conic-gradient(from 320deg at 40% 60%,#22d3ee,#050208,#8b5cf6,#22d3ee)}
+  .g4{background:conic-gradient(from 120deg at 50% 50%,#8b5cf6,#ffd166,#ff3d81,#8b5cf6)}
+  .g5{background:conic-gradient(from 260deg at 70% 30%,#050208,#22d3ee,#ffd166,#050208)}
+
+  /* ---------- TERMINAL ---------- */
+  #terminal-sec{background:#000;border-top:1px solid #ffffff14;border-bottom:1px solid #ffffff14}
+  .term{max-width:760px;margin:0 auto;border-radius:14px;overflow:hidden;
+    border:1px solid #ffffff1c;box-shadow:0 30px 80px #8b5cf622;background:#0a0612}
+  .term-bar{display:flex;gap:.5rem;align-items:center;padding:.8rem 1rem;background:#ffffff08}
+  .term-bar i{width:11px;height:11px;border-radius:50%}
+  .term-bar i:nth-child(1){background:#ff5f57}.term-bar i:nth-child(2){background:#febc2e}
+  .term-bar i:nth-child(3){background:#28c840}
+  .term-bar span{margin-left:auto;font-family:var(--mono);font-size:.65rem;color:#ffffff55}
+  .term-body{padding:1.4rem;font-family:var(--mono);font-size:.82rem;line-height:1.9;
+    min-height:300px;color:#c9f7d9;white-space:pre-wrap}
+  .term-body .p{color:var(--pink)} .term-body .c{color:var(--cyan)}
+  .caret{display:inline-block;width:9px;height:1.1em;background:#c9f7d9;vertical-align:text-bottom;
+    animation:blink 1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+
+  /* ---------- STATS ---------- */
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:2rem;text-align:center}
+  .stat b{font-size:clamp(2.6rem,6vw,4.5rem);font-weight:800;display:block;
+    background:linear-gradient(180deg,var(--ink),#8b5cf6);
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .stat span{font-family:var(--mono);font-size:.7rem;letter-spacing:.3em;color:#ffffff77}
+
+  /* ---------- FOOTER ---------- */
+  footer{padding:8rem clamp(1.2rem,6vw,6rem) 3rem;text-align:center;position:relative;overflow:hidden}
+  footer h2{font-size:clamp(3rem,11vw,9rem);font-weight:800;text-transform:uppercase;
+    line-height:.95;letter-spacing:-.03em}
+  footer h2 a{color:transparent;-webkit-text-stroke:1.5px var(--ink);text-decoration:none;transition:color .4s}
+  footer h2 a:hover{color:var(--pink);-webkit-text-stroke:1.5px var(--pink)}
+  .foot-meta{margin-top:5rem;display:flex;justify-content:space-between;flex-wrap:wrap;gap:1rem;
+    font-family:var(--mono);font-size:.65rem;letter-spacing:.25em;color:#ffffff55}
+
+  .magnetic{display:inline-block;padding:.9rem 2.2rem;border:1px solid #ffffff33;border-radius:999px;
+    font-family:var(--mono);font-size:.72rem;letter-spacing:.3em;text-transform:uppercase;
+    color:var(--ink);text-decoration:none;margin-top:2.5rem;will-change:transform}
+
+  /* ---------- GRAIN ---------- */
+  #grain{position:fixed;inset:-100px;z-index:998;pointer-events:none;opacity:.06}
+
+  @media (max-width:640px){ nav ul{display:none} }
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+<base target="_blank">
+</head>
+<body>
+
+<div id="preloader">
+  <div class="tag">INITIALIZING EXPERIENCE</div>
+  <div id="counter">00</div>
+  <div id="bar"><i></i></div>
+</div>
+
+<div id="cursor-dot"></div><div id="cursor-ring"></div>
+<canvas id="grain"></canvas>
+
+<nav>
+  <div class="logo">ÆTH<span>E</span>R</div>
+  <ul>
+    <li><a href="#about" data-hover>Manifesto</a></li>
+    <li><a href="#work" data-hover>Work</a></li>
+    <li><a href="#terminal-sec" data-hover>Console</a></li>
+    <li><a href="#contact" data-hover>Contact</a></li>
+  </ul>
+</nav>
+
+<header id="hero">
+  <canvas id="webgl"></canvas>
+  <div class="hero-inner">
+    <div class="hero-kicker">CREATIVE DEVELOPER — PORTFOLIO 2026</div>
+    <h1>
+      <span class="line"><span>Digital</span></span>
+      <span class="line"><span class="stroke">Dreams</span></span>
+      <span class="line"><span>Rendered</span></span>
+    </h1>
+    <div class="hero-sub" id="scramble">WEBGL · GLSL · MOTION · CODE AS ART</div>
+  </div>
+  <div class="scroll-hint">SCROLL</div>
+</header>
+
+<div class="marquee"><div class="marquee-track" id="mq">
+  <span>Creative Code</span><span class="fill">✦</span><span>Shader Art</span><span class="fill">✦</span>
+  <span>Motion Design</span><span class="fill">✦</span><span>WebGL</span><span class="fill">✦</span>
+  <span>Type Systems</span><span class="fill">✦</span><span>Generative</span><span class="fill">✦</span>
+</div></div>
+
+<section id="about" class="manifesto">
+  <div class="sec-label">01 — MANIFESTO</div>
+  <p id="manifesto-text">We build <em>living interfaces</em> where design and engineering collide — every pixel <u>engineered</u>, every frame a <em>performance</em>.</p>
+</section>
+
+<section id="work">
+  <div class="head">
+    <div class="sec-label">02 — SELECTED WORK</div>
+    <h2 style="font-size:clamp(2rem,5vw,4rem);font-weight:800">Scroll sideways through the dreamscape →</h2>
+  </div>
+  <div class="hscroll" id="hscroll">
+    <div class="card" data-tilt><div class="num">PRJ—001</div><div class="art g1"></div><h3>Nebula Commerce</h3><p>Headless storefront with a real-time GLSL product configurator. 3× conversion.</p></div>
+    <div class="card" data-tilt><div class="num">PRJ—002</div><div class="art g2"></div><h3>Solar Syntax</h3><p>Generative identity system — 10,000 unique logos minted from one seed function.</p></div>
+    <div class="card" data-tilt><div class="num">PRJ—003</div><div class="art g3"></div><h3>Pulse Grid</h3><p>Live data sculpture: 50k datapoints rendered as an audio-reactive particle field.</p></div>
+    <div class="card" data-tilt><div class="num">PRJ—004</div><div class="art g4"></div><h3>Mono No Aware</h3><p>Award-winning editorial site. Scroll-driven WebGL scenes, zero images.</p></div>
+    <div class="card" data-tilt><div class="num">PRJ—005</div><div class="art g5"></div><h3>Deep Field</h3><p>Interactive documentary navigating a procedural universe in the browser.</p></div>
+  </div>
+</section>
+
+<section id="terminal-sec">
+  <div class="sec-label">03 — LIVE CONSOLE</div>
+  <div class="term">
+    <div class="term-bar"><i></i><i></i><i></i><span>aether@dreammachine: ~/portfolio</span></div>
+    <div class="term-body"><span id="term-out"></span><span class="caret"></span></div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-label">04 — BY THE NUMBERS</div>
+  <div class="stats">
+    <div class="stat"><b data-count="120">0</b><span>PROJECTS SHIPPED</span></div>
+    <div class="stat"><b data-count="18">0</b><span>AWARDS WON</span></div>
+    <div class="stat"><b data-count="60">0</b><span>FPS, ALWAYS</span></div>
+    <div class="stat"><b data-count="0">0</b><span>PIXELS WASTED</span></div>
+  </div>
+</section>
+
+<footer id="contact">
+  <h2><a href="mailto:hello@aether.dev" data-hover>Let's Build<br>The Future</a></h2>
+  <a class="magnetic" href="mailto:hello@aether.dev" data-hover>Initiate Contact</a>
+  <div class="foot-meta">
+    <span>© 2026 ÆTHER STUDIO</span><span>DESIGNED IN THE VOID</span><span>RENDERED IN YOUR BROWSER</span>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
+<script>
+gsap.registerPlugin(ScrollTrigger);
+
+/* ================= SMOOTH SCROLL (Lenis) ================= */
+const lenis = new Lenis({ lerp: 0.09 });
+lenis.on('scroll', ScrollTrigger.update);
+gsap.ticker.add(t => lenis.raf(t * 1000));
+gsap.ticker.lagSmoothing(0);
+
+/* ================= WEBGL NEBULA (domain-warped fbm shader) ================= */
+(() => {
+  const canvas = document.getElementById('webgl');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  const scene = new THREE.Scene();
+  const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  const uni = {
+    uTime: { value: 0 },
+    uRes: { value: new THREE.Vector2() },
+    uMouse: { value: new THREE.Vector2(0, 0) }
+  };
+  const mat = new THREE.ShaderMaterial({
+    uniforms: uni,
+    fragmentShader: `
+      precision highp float;
+      uniform float uTime; uniform vec2 uRes; uniform vec2 uMouse;
+      float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7))) * 43758.5453); }
+      float noise(vec2 p){
+        vec2 i=floor(p), f=fract(p); f=f*f*(3.-2.*f);
+        return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),
+                   mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x),f.y);
+      }
+      float fbm(vec2 p){
+        float v=0., a=.5;
+        mat2 rot = mat2(.8,.6,-.6,.8);
+        for(int i=0;i<6;i++){ v+=a*noise(p); p=rot*p*2.03; a*=.5; }
+        return v;
+      }
+      void main(){
+        vec2 uv = (gl_FragCoord.xy - .5*uRes) / uRes.y;
+        uv += uMouse * .18;
+        float t = uTime * .12;
+        vec2 q = vec2(fbm(uv + t), fbm(uv + vec2(5.2,1.3) - t*.8));
+        vec2 r = vec2(fbm(uv + 3.5*q + vec2(1.7,9.2) + .2*t),
+                      fbm(uv + 3.5*q + vec2(8.3,2.8) - .16*t));
+        float f = fbm(uv + 3.2*r);
+        vec3 col = mix(vec3(.03,.01,.08), vec3(.55,.06,.32), clamp(f*f*2.6,0.,1.));
+        col = mix(col, vec3(.07,.35,.55), clamp(length(q)*.75,0.,1.));
+        col = mix(col, vec3(.45,.28,.9),  clamp(r.x*r.x*1.2,0.,1.));
+        col = mix(col, vec3(1.,.82,.4),   pow(clamp(f,0.,1.),6.)*.9);
+        col *= smoothstep(1.5,.2,length(uv));           // vignette
+        col += .03*sin(uv.y*90. + uTime*2.);            // scanline shimmer
+        gl_FragColor = vec4(col,1.);
+      }`,
+    vertexShader: `void main(){ gl_Position = vec4(position,1.); }`
+  });
+  scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat));
+  const resize = () => {
+    renderer.setSize(innerWidth, innerHeight, false);
+    uni.uRes.value.set(canvas.width, canvas.height);
+  };
+  addEventListener('resize', resize); resize();
+  const tgt = { x: 0, y: 0 };
+  addEventListener('pointermove', e => {
+    tgt.x = (e.clientX / innerWidth - .5) * 2;
+    tgt.y = -(e.clientY / innerHeight - .5) * 2;
+  });
+  (function loop(t) {
+    requestAnimationFrame(loop);
+    uni.uTime.value = t / 1000;
+    uni.uMouse.value.x += (tgt.x - uni.uMouse.value.x) * .04;
+    uni.uMouse.value.y += (tgt.y - uni.uMouse.value.y) * .04;
+    renderer.render(scene, cam);
+  })(0);
+})();
+
+/* ================= CUSTOM CURSOR ================= */
+(() => {
+  const dot = document.getElementById('cursor-dot');
+  const ring = document.getElementById('cursor-ring');
+  let mx = innerWidth/2, my = innerHeight/2, rx = mx, ry = my;
+  addEventListener('pointermove', e => { mx = e.clientX; my = e.clientY; });
+  gsap.ticker.add(() => {
+    rx += (mx - rx) * .16; ry += (my - ry) * .16;
+    dot.style.transform = `translate(${mx-4}px,${my-4}px)`;
+    ring.style.transform = `translate(${rx - ring.offsetWidth/2}px,${ry - ring.offsetHeight/2}px)`;
+  });
+  document.querySelectorAll('a,button,[data-hover],[data-tilt]').forEach(el => {
+    el.addEventListener('pointerenter', () => ring.classList.add('hovering'));
+    el.addEventListener('pointerleave', () => ring.classList.remove('hovering'));
+  });
+})();
+
+/* ================= FILM GRAIN ================= */
+(() => {
+  const c = document.getElementById('grain'), ctx = c.getContext('2d');
+  const s = 256; c.width = s; c.height = s;
+  const frames = Array.from({length: 4}, () => {
+    const d = ctx.createImageData(s, s);
+    for (let i = 0; i < d.data.length; i += 4) {
+      const v = Math.random() * 255 | 0;
+      d.data[i] = d.data[i+1] = d.data[i+2] = v; d.data[i+3] = 255;
+    }
+    return d;
+  });
+  let i = 0;
+  setInterval(() => { ctx.putImageData(frames[i = (i+1) % 4], 0, 0); }, 90);
+})();
+
+/* ================= PRELOADER ================= */
+(() => {
+  const counter = document.getElementById('counter');
+  const bar = document.querySelector('#bar i');
+  const obj = { v: 0 };
+  const tl = gsap.timeline();
+  tl.to(obj, {
+    v: 100, duration: 1.8, ease: 'power2.inOut',
+    onUpdate: () => {
+      counter.textContent = String(Math.round(obj.v)).padStart(2, '0');
+      bar.style.transform = `scaleX(${obj.v/100})`;
+    }
+  })
+  .to('#preloader', { yPercent: -100, duration: 1, ease: 'power4.inOut' })
+  .from('h1 .line span', { yPercent: 110, duration: 1.1, stagger: .12, ease: 'power4.out' }, '-=.5')
+  .from('.hero-kicker,.hero-sub,.scroll-hint', { opacity: 0, y: 20, stagger: .1, duration: .8 }, '-=.7')
+  .set('#preloader', { display: 'none' });
+})();
+
+/* ================= TEXT SCRAMBLE ================= */
+(() => {
+  const chars = '!<>-_\\/[]{}—=+*^?#01';
+  const el = document.getElementById('scramble');
+  const original = el.textContent;
+  let frame, iter;
+  el.addEventListener('pointerenter', () => {
+    iter = 0; cancelAnimationFrame(frame);
+    (function step() {
+      el.textContent = original.split('').map((ch, i) =>
+        ch === ' ' || ch === '·' ? ch :
+        i < iter ? original[i] : chars[Math.random()*chars.length|0]
+      ).join('');
+      iter += original.length / 18;
+      if (iter < original.length) frame = requestAnimationFrame(step);
+    })();
+  });
+})();
+
+/* ================= MARQUEE ================= */
+gsap.to('#mq', { xPercent: -50, duration: 18, ease: 'none', repeat: -1 });
+
+/* ================= MANIFESTO WORD REVEAL ================= */
+(() => {
+  const p = document.getElementById('manifesto-text');
+  p.innerHTML = p.innerHTML.replace(/(<em>|<\/em>|<u>|<\/u>)|(\S+)/g,
+    (m, tag, word) => tag ? tag : `<span class="w">${word}</span>`);
+  gsap.to('#manifesto-text .w', {
+    opacity: 1, stagger: .06, ease: 'none',
+    scrollTrigger: { trigger: p, start: 'top 75%', end: 'top 25%', scrub: true }
+  });
+})();
+
+/* ================= HORIZONTAL SCROLL + TILT ================= */
+(() => {
+  const track = document.getElementById('hscroll');
+  gsap.to(track, {
+    x: () => -(track.scrollWidth - innerWidth),
+    ease: 'none',
+    scrollTrigger: {
+      trigger: '#work', start: 'top top',
+      end: () => '+=' + (track.scrollWidth - innerWidth),
+      pin: true, scrub: 1, invalidateOnRefresh: true
+    }
+  });
+  document.querySelectorAll('[data-tilt]').forEach(card => {
+    card.addEventListener('pointermove', e => {
+      const r = card.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - .5;
+      const y = (e.clientY - r.top) / r.height - .5;
+      gsap.to(card, { rotateY: x * 14, rotateX: -y * 14, scale: 1.02, duration: .4, ease: 'power2.out' });
+    });
+    card.addEventListener('pointerleave', () =>
+      gsap.to(card, { rotateX: 0, rotateY: 0, scale: 1, duration: .6, ease: 'elastic.out(1,.5)' }));
+  });
+})();
+
+/* ================= TERMINAL TYPING ================= */
+(() => {
+  const out = document.getElementById('term-out');
+  const lines = [
+    ['p', '$ '], ['', 'whoami'],
+    ['c', 'aether — creative developer & shader wizard\n'],
+    ['p', '$ '], ['', 'cat ./stack.txt'],
+    ['c', 'three.js · glsl · gsap · lenis · vite\n'],
+    ['p', '$ '], ['', 'npm run build:dreams'],
+    ['c', '▓▓▓▓▓▓▓▓▓▓ 100% — compiled 1,337 wonders\n'],
+    ['p', '$ '], ['', 'status'],
+    ['c', 'ALL SYSTEMS DREAMING ✦\n'],
+  ];
+  let li = 0, ci = 0, started = false;
+  function type() {
+    if (li >= lines.length) return;
+    const [cls, text] = lines[li];
+    if (ci === 0 && cls) out.innerHTML += `<span class="${cls}">`;
+    const ch = text[ci++];
+    out.innerHTML += ch === '\n' ? (cls ? '</span>' : '') + '\n' : ch;
+    if (ci >= text.length) { if (cls && text.slice(-1) !== '\n') out.innerHTML += '</span>'; li++; ci = 0; }
+    setTimeout(type, ch === '\n' ? 300 : (Math.random() * 40 + 15));
+  }
+  new IntersectionObserver((e, o) => {
+    if (e[0].isIntersecting && !started) { started = true; type(); o.disconnect(); }
+  }, { threshold: .4 }).observe(out);
+})();
+
+/* ================= COUNTERS ================= */
+document.querySelectorAll('[data-count]').forEach(el => {
+  const target = +el.dataset.count, obj = { v: 0 };
+  gsap.to(obj, {
+    v: target, duration: 1.6, ease: 'power2.out',
+    snap: { v: 1 },
+    onUpdate: () => el.textContent = Math.round(obj.v) + (target > 0 ? '+' : ''),
+    scrollTrigger: { trigger: el, start: 'top 85%' }
+  });
+});
+
+/* ================= MAGNETIC BUTTON ================= */
+document.querySelectorAll('.magnetic').forEach(btn => {
+  btn.addEventListener('pointermove', e => {
+    const r = btn.getBoundingClientRect();
+    gsap.to(btn, {
+      x: (e.clientX - r.left - r.width/2) * .4,
+      y: (e.clientY - r.top - r.height/2) * .4,
+      duration: .4, ease: 'power2.out'
+    });
+  });
+  btn.addEventListener('pointerleave', () =>
+    gsap.to(btn, { x: 0, y: 0, duration: .7, ease: 'elastic.out(1,.4)' }));
+});
+
+/* anchor links through lenis */
+document.querySelectorAll('nav a[href^="#"]').forEach(a =>
+  a.addEventListener('click', e => { e.preventDefault(); lenis.scrollTo(a.getAttribute('href')); }));
+</script>
+</body>
+</html>

@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AETHER // SYNAPSE — Algorithmic & Audiovisual Manifold</title>
+  <!-- Tailwind CSS for sleek glassmorphic HUD layout -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Inter & JetBrains Mono Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --obsidian: #05060a;
+      --cyan-glow: #00f0ff;
+      --violet-glow: #9d4edd;
+      --gold-glow: #ffbe0b;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--obsidian);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: #f8fafc;
+    }
+
+    .font-mono-tech {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Fullscreen layered canvases */
+    #gl-canvas, #spatial-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      display: block;
+    }
+
+    #gl-canvas {
+      z-index: 1;
+    }
+
+    #spatial-canvas {
+      z-index: 2;
+      pointer-events: auto;
+      cursor: grab;
+    }
+
+    #spatial-canvas:active {
+      cursor: grabbing;
+    }
+
+    /* Ultra-refined Glassmorphism */
+    .glass-panel {
+      background: rgba(10, 12, 22, 0.58);
+      backdrop-filter: blur(18px) saturate(160%);
+      -webkit-backdrop-filter: blur(18px) saturate(160%);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      box-shadow: 0 18px 45px -10px rgba(0, 0, 0, 0.75), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+    }
+
+    .glass-pill {
+      background: rgba(15, 19, 34, 0.65);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .glass-pill:hover {
+      border-color: rgba(0, 240, 255, 0.45);
+      background: rgba(20, 28, 48, 0.85);
+      transform: translateY(-1px);
+    }
+
+    .glass-pill.active {
+      background: linear-gradient(135deg, rgba(0, 240, 255, 0.18), rgba(157, 78, 221, 0.22));
+      border-color: rgba(0, 240, 255, 0.7);
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.22);
+      color: #ffffff;
+    }
+
+    /* Custom Range Sliders */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 14px;
+      width: 14px;
+      border-radius: 50%;
+      background: #00f0ff;
+      margin-top: -5px;
+      box-shadow: 0 0 10px rgba(0, 240, 255, 0.85);
+      transition: transform 0.15s ease;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.25);
+    }
+
+    /* Subtle pulse animation */
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.75; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.08); }
+    }
+
+    .status-dot {
+      animation: pulseGlow 2.4s infinite ease-in-out;
+    }
+
+    /* Custom Scrollbar for Playground Drawer */
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.02);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(0, 240, 255, 0.28);
+      border-radius: 999px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LAYER 1: Real-time WebGL2 / GLSL Raymarched Cosmic Manifold & Fluid Shader -->
+  <canvas id="gl-canvas"></canvas>
+
+  <!-- LAYER 2: 3D Spatial Neural-Symbolic & Cryptographic Merkle Lattice + Living Algorithms -->
+  <canvas id="spatial-canvas"></canvas>
+
+  <!-- LAYER 3: Sleek Glassmorphic HUD -->
+  <div id="hud-root" class="fixed inset-0 z-10 pointer-events-none flex flex-col justify-between p-4 sm:p-6">
+
+    <!-- TOP BAR: Brand Identity, Telemetry & Audio Engine Toggle -->
+    <header class="flex flex-wrap items-center justify-between gap-3">
+      <!-- Brand + Live Status -->
+      <div class="glass-panel pointer-events-auto rounded-2xl px-4 py-2.5 flex items-center gap-3.5">
+        <div class="relative flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br from-cyan-400/20 via-violet-500/20 to-amber-400/20 border border-cyan-400/40">
+          <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 status-dot shadow-[0_0_12px_#00f0ff]"></span>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-sm sm:text-base font-semibold tracking-wider text-white">AETHER <span class="text-cyan-400">//</span> SYNAPSE</h1>
+            <span class="hidden sm:inline-block text-[10px] font-mono-tech px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">v4.2-KERNEL</span>
+          </div>
+          <p class="text-[11px] text-slate-400 font-mono-tech tracking-tight" id="active-subtitle">MANIFOLD // RAYMARCHED FLUID TOPOLOGY</p>
+        </div>
+      </div>
+
+      <!-- Live Telemetry & Audio Synth Control -->
+      <div class="flex items-center gap-2.5 pointer-events-auto">
+        <!-- Telemetry Pill (Hidden on tiny screens, visible on md+) -->
+        <div class="hidden md:flex glass-panel rounded-2xl px-4 py-2 items-center gap-5 font-mono-tech text-xs">
+          <div>
+            <span class="text-slate-500 block text-[10px]">FRAME RATE</span>
+            <span id="telemetry-fps" class="text-cyan-300 font-semibold">60 FPS</span>
+          </div>
+          <div class="h-6 w-[1px] bg-white/10"></div>
+          <div>
+            <span class="text-slate-500 block text-[10px]">SHANNON ENTROPY</span>
+            <span id="telemetry-entropy" class="text-violet-300 font-semibold">7.942 bits</span>
+          </div>
+          <div class="h-6 w-[1px] bg-white/10"></div>
+          <div>
+            <span class="text-slate-500 block text-[10px]">LYDIAN HARMONIC</span>
+            <span id="telemetry-freq" class="text-amber-300 font-semibold">432.0 Hz</span>
+          </div>
+        </div>
+
+        <!-- Generative Web Audio Toggle -->
+        <button id="audio-toggle-btn" class="glass-pill rounded-2xl px-4 py-2.5 flex items-center gap-2.5 text-xs font-medium text-slate-200 cursor-pointer">
+          <svg id="audio-icon-off" class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+          </svg>
+          <span id="audio-btn-label" class="font-mono-tech">AUDIO: INITIALIZE</span>
+        </button>
+
+        <!-- Playground / CLI Drawer Toggle -->
+        <button id="drawer-toggle-btn" class="glass-pill rounded-2xl px-3.5 py-2.5 flex items-center gap-2 text-xs font-medium text-cyan-300 cursor-pointer" title="Toggle Mathematical Constants & CLI Drawer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <span class="hidden sm:inline font-mono-tech">LAB // CLI</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- CENTER OVERLAY: Selected Merkle Node Micro-Simulation Inspector Modal (Appears when clicking a 3D Node) -->
+    <div id="node-inspector" class="hidden pointer-events-auto self-start sm:self-end my-auto w-full sm:w-80 glass-panel rounded-2xl p-4 transition-all duration-300 border border-cyan-400/30">
+      <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-2">
+          <span id="inspector-badge" class="w-2 h-2 rounded-full bg-cyan-400"></span>
+          <span id="inspector-algo-tag" class="text-[10px] font-mono-tech uppercase tracking-widest text-cyan-300">ALGORITHM NODE</span>
+        </div>
+        <button id="close-inspector-btn" class="text-slate-400 hover:text-white text-xs font-mono-tech px-2 py-0.5 rounded bg-white/5">✕</button>
+      </div>
+      <h3 id="inspector-title" class="text-sm font-semibold text-white mb-1">Mandelbrot Set Zoomer</h3>
+      <p id="inspector-desc" class="text-xs text-slate-300 leading-relaxed mb-3">Complex plane escape-time fractal rendered in real time.</p>
+
+      <!-- Live Mini-Simulation Canvas inside Inspector -->
+      <div class="relative rounded-xl overflow-hidden border border-white/10 bg-black/60 mb-3 h-32">
+        <canvas id="mini-sim-canvas" class="w-full h-full block"></canvas>
+        <div class="absolute bottom-1.5 right-2 text-[10px] font-mono-tech text-cyan-300/80 bg-black/60 px-1.5 py-0.5 rounded" id="mini-sim-stat">ITER: 128</div>
+      </div>
+
+      <!-- Merkle Cryptographic Proof Hash -->
+      <div class="bg-black/40 rounded-xl p-2.5 border border-white/5 font-mono-tech text-[10px]">
+        <div class="flex justify-between text-slate-400 mb-1">
+          <span>MERKLE STATE ROOT</span>
+          <span class="text-emerald-400">VERIFIED ✓</span>
+        </div>
+        <div id="inspector-hash" class="text-amber-300 truncate">0x8f94b2c1e77d...4a91e0</div>
+      </div>
+    </div>
+
+    <!-- SLIDE-OVER RIGHT DRAWER: Interactive Constants & Live CLI / Shader Playground -->
+    <aside id="lab-drawer" class="fixed top-20 right-4 sm:right-6 bottom-24 w-[calc(100vw-2rem)] sm:w-96 glass-panel rounded-2xl p-4 pointer-events-auto flex flex-col justify-between transition-all duration-300 translate-x-[120%] opacity-0 z-20">
+      <div class="overflow-y-auto pr-1 space-y-4">
+        <div class="flex items-center justify-between border-b border-white/10 pb-2.5">
+          <div>
+            <h2 class="text-xs font-semibold uppercase tracking-widest text-cyan-300 font-mono-tech">Parametric Manifold Lab</h2>
+            <p class="text-[11px] text-slate-400">Mutate differential equations & shader uniforms</p>
+          </div>
+          <button id="reset-params-btn" class="text-[10px] font-mono-tech px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10">RESET</button>
+        </div>
+
+        <!-- Mathematical Sliders -->
+        <div class="space-y-3 text-xs">
+          <div>
+            <div class="flex justify-between font-mono-tech text-[11px] mb-1">
+              <span class="text-slate-300">Warp Turbulence (∇ × F)</span>
+              <span id="val-turbulence" class="text-cyan-300">1.35</span>
+            </div>
+            <input id="param-turbulence" type="range" min="0.2" max="3.0" step="0.05" value="1.35" class="w-full" />
+          </div>
+
+          <div>
+            <div class="flex justify-between font-mono-tech text-[11px] mb-1">
+              <span class="text-slate-300">Lorenz Rho (ρ Bifurcation)</span>
+              <span id="val-rho" class="text-violet-300">28.0</span>
+            </div>
+            <input id="param-rho" type="range" min="14.0" max="42.0" step="0.5" value="28.0" class="w-full" />
+          </div>
+
+          <div>
+            <div class="flex justify-between font-mono-tech text-[11px] mb-1">
+              <span class="text-slate-300">Boids Cohesion / Alignment</span>
+              <span id="val-cohesion" class="text-amber-300">1.20</span>
+            </div>
+            <input id="param-cohesion" type="range" min="0.1" max="2.5" step="0.05" value="1.20" class="w-full" />
+          </div>
+
+          <div>
+            <div class="flex justify-between font-mono-tech text-[11px] mb-1">
+              <span class="text-slate-300">Chromatic Dispersion</span>
+              <span id="val-chromatic" class="text-cyan-300">0.65</span>
+            </div>
+            <input id="param-chromatic" type="range" min="0.0" max="1.5" step="0.05" value="0.65" class="w-full" />
+          </div>
+        </div>
+
+        <!-- Interactive Cryptographic / Algorithmic CLI -->
+        <div class="pt-2 border-t border-white/10">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-[10px] font-mono-tech uppercase tracking-wider text-slate-400">SYNAPSE REPL // TYPE 'HELP'</span>
+            <span class="text-[10px] font-mono-tech text-emerald-400">SHA-256 READY</span>
+          </div>
+          <div id="cli-output" class="h-32 overflow-y-auto rounded-xl bg-black/60 border border-white/10 p-2.5 font-mono-tech text-[11px] text-slate-300 space-y-1 mb-2">
+            <div class="text-cyan-400">AETHER KERNEL v4.2 initialized.</div>
+            <div class="text-slate-400">Commands: <span class="text-amber-300">hash &lt;text&gt;</span>, <span class="text-amber-300">pulse</span>, <span class="text-amber-300">morph &lt;0-3&gt;</span>, <span class="text-amber-300">clear</span></div>
+          </div>
+          <form id="cli-form" class="flex gap-1.5">
+            <input id="cli-input" type="text" placeholder="hash hello world..." autocomplete="off"
+              class="flex-1 bg-black/70 border border-white/15 rounded-xl px-3 py-1.5 text-xs font-mono-tech text-white focus:outline-none focus:border-cyan-400" />
+            <button type="submit" class="px-3 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/40 text-cyan-300 text-xs font-mono-tech">RUN</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="pt-2 border-t border-white/10 flex items-center justify-between text-[10px] font-mono-tech text-slate-400">
+        <span>DRAG SPACE TO ORBIT • CLICK NODES</span>
+        <span class="text-cyan-400">60HZ SYNC</span>
+      </div>
+    </aside>
+
+    <!-- BOTTOM DOCK: Mode Switcher (Manifold, Strange Attractor, Boids Swarm, Merkle Crypto) -->
+    <footer class="flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div class="glass-panel pointer-events-auto rounded-2xl p-1.5 flex flex-wrap items-center justify-center gap-1.5">
+        <button data-mode="0" class="mode-btn glass-pill active rounded-xl px-3.5 py-2 text-xs font-medium flex items-center gap-2 cursor-pointer">
+          <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+          <span>01. Cosmic Manifold</span>
+        </button>
+        <button data-mode="1" class="mode-btn glass-pill rounded-xl px-3.5 py-2 text-xs font-medium flex items-center gap-2 cursor-pointer">
+          <span class="w-2 h-2 rounded-full bg-violet-400"></span>
+          <span>02. Lorenz Attractor</span>
+        </button>
+        <button data-mode="2" class="mode-btn glass-pill rounded-xl px-3.5 py-2 text-xs font-medium flex items-center gap-2 cursor-pointer">
+          <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+          <span>03. Boids Swarm</span>
+        </button>
+        <button data-mode="3" class="mode-btn glass-pill rounded-xl px-3.5 py-2 text-xs font-medium flex items-center gap-2 cursor-pointer">
+          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          <span>04. Merkle Lattice</span>
+        </button>
+      </div>
+
+      <!-- Subtle Interactive Hint Pill -->
+      <div class="glass-panel pointer-events-auto rounded-2xl px-4 py-2 text-[11px] font-mono-tech text-slate-300 flex items-center gap-2">
+        <span class="text-cyan-400">✦</span>
+        <span id="interaction-hint">Move cursor to bend spacetime • Click any 3D node to inspect live algorithm</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Toast Notification Container (Replaces any alert/confirm) -->
+  <div id="toast-container" class="fixed top-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none flex flex-col items-center gap-2"></div>
+
+  <script>
+    /**
+     * ============================================================================
+     * AETHER // SYNAPSE — CORE ENGINE
+     * Fuses:
+     * 1. WebGL2/WebGL1 Real-time GLSL Raymarched Cosmic Manifold & Fluid Dynamics
+     * 2. 3D Spatial Projection Engine (Merkle Tree Lattice, Lorenz Strange Attractor,
+     *    3D Boids Flocking Simulation, & Interactive Algorithm Nodes)
+     * 3. Live Mini-Simulations (Mandelbrot/Julia Fractal, Game of Life, Lorenz, Boids)
+     * 4. Web Audio API Generative Lydian Polyphonic Synthesizer & Granular Sub-Bass
+     * 5. Interactive Cryptographic SHA-256 / Avalanche CLI & Parameter Mutator
+     * ============================================================================
+     */
+
+    // --- GLOBAL STATE & MATHEMATICAL PARAMETERS ---
+    const STATE = {
+      mode: 0, // 0: Cosmic Manifold, 1: Lorenz Attractor, 2: Boids Swarm, 3: Merkle Lattice
+      time: 0,
+      dt: 0.016,
+      fps: 60,
+      mouse: { x: 0.5, y: 0.5, tx: 0.5, ty: 0.5, vx: 0, vy: 0, down: false },
+      camera: { rotX: 0.28, rotY: 0.45, targetRotX: 0.28, targetRotY: 0.45, zoom: 1.0 },
+      params: {
+        turbulence: 1.35,
+        rho: 28.0,
+        cohesion: 1.20,
+        chromatic: 0.65
+      },
+      audio: {
+        enabled: false,
+        ctx: null,
+        masterGain: null,
+        analyser: null,
+        freqData: null,
+        bassEnergy: 0,
+        highEnergy: 0,
+        lastFreq: 432.0
+      },
+      selectedNode: null,
+      entropy: 7.942,
+      merklePulse: 0
+    };
+
+    const MODE_META = [
+      {
+        subtitle: "MANIFOLD // RAYMARCHED FLUID TOPOLOGY",
+        hint: "Move cursor to warp iridescent spacetime • Click any 3D node to inspect algorithm"
+      },
+      {
+        subtitle: "CHAOS THEORY // LORENZ STRANGE ATTRACTOR (dx/dt = σ(y-x))",
+        hint: "Adjust ρ (Rho) in LAB // CLI to observe deterministic chaos bifurcations"
+      },
+      {
+        subtitle: "EMERGENCE // 3D REYNOLDS BOIDS FLOCKING SWARM",
+        hint: "Autonomous agents following separation, alignment & cohesion vectors"
+      },
+      {
+        subtitle: "CRYPTOGRAPHY // MERKLE DAG & AVALANCHE HASH LATTICE",
+        hint: "Click any node to verify cryptographic proof or hash strings in LAB // CLI"
+      }
+    ];
+
+    // --- UTILITY: NON-BLOCKING TOAST MESSAGE ---
+    function showToast(msg, accent = "cyan") {
+      const container = document.getElementById("toast-container");
+      const toast = document.createElement("div");
+      const borderCol = accent === "amber" ? "border-amber-400/50 text-amber-200" : "border-cyan-400/50 text-cyan-200";
+      toast.className = `glass-panel px-4 py-2 rounded-xl text-xs font-mono-tech border ${borderCol} shadow-lg transition-all duration-300 opacity-0 -translate-y-2`;
+      toast.textContent = msg;
+      container.appendChild(toast);
+      requestAnimationFrame(() => {
+        toast.classList.remove("opacity-0", "-translate-y-2");
+      });
+      setTimeout(() => {
+        toast.classList.add("opacity-0", "-translate-y-2");
+        setTimeout(() => toast.remove(), 300);
+      }, 2600);
+    }
+
+    // --- UTILITY: DETERMINISTIC FAST HASH (SHA-LIKE AVALANCHE SIMULATION) ---
+    function computeMerkleHash(str) {
+      let h1 = 0xdeadbeef ^ str.length;
+      let h2 = 0x41c6ce57 ^ str.length;
+      for (let i = 0; i < str.length; i++) {
+        const ch = str.charCodeAt(i);
+        h1 = Math.imul(h1 ^ ch, 2654435761);
+        h2 = Math.imul(h2 ^ ch, 1597334677);
+      }
+      h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+      h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+      const p1 = (h1 >>> 0).toString(16).padStart(8, "0");
+      const p2 = (h2 >>> 0).toString(16).padStart(8, "0");
+      const p3 = ((h1 ^ h2) >>> 0).toString(16).padStart(8, "0");
+      const p4 = ((h1 + h2) >>> 0).toString(16).padStart(8, "0");
+      return `0x${p1}${p2}${p3}${p4}`;
+    }
+
+    // ============================================================================
+    // 1. WEB AUDIO API GENERATIVE LYDIAN SYNTHESIZER & SUB-BASS ENGINE
+    // ============================================================================
+    const LYDIAN_FREQS = [
+      261.63, // C4
+      293.66, // D4
+      329.63, // E4
+      369.99, // F#4 (Lydian #4!)
+      392.00, // G4
+      440.00, // A4
+      493.88, // B4
+      523.25, // C5
+      587.33, // D5
+      659.25, // E5
+      739.99, // F#5
+      783.99  // G5
+    ];
+
+    function initAudioEngine() {
+      if (STATE.audio.ctx) {
+        if (STATE.audio.ctx.state === "suspended") {
+          STATE.audio.ctx.resume();
+        }
+        STATE.audio.enabled = true;
+        updateAudioButtonUI();
+        return;
+      }
+
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioCtx();
+
+        const masterGain = ctx.createGain();
+        masterGain.gain.setValueAtTime(0.28, ctx.currentTime);
+
+        // Stereo Delay / Space Echo for cosmic ambience
+        const delay = ctx.createDelay(2.0);
+        delay.delayTime.setValueAtTime(0.38, ctx.currentTime);
+
+        const feedback = ctx.createGain();
+        feedback.gain.setValueAtTime(0.42, ctx.currentTime);
+
+        const filter = ctx.createBiquadFilter();
+        filter.type = "lowpass";
+        filter.frequency.setValueAtTime(1900, ctx.currentTime);
+
+        delay.connect(feedback);
+        feedback.connect(filter);
+        filter.connect(delay);
+        delay.connect(masterGain);
+
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 128;
+        const freqData = new Uint8Array(analyser.frequencyBinCount);
+
+        masterGain.connect(analyser);
+        analyser.connect(ctx.destination);
+
+        // Warm Sub-Bass Drone (C2 + G2 fifth)
+        const droneOsc1 = ctx.createOscillator();
+        const droneOsc2 = ctx.createOscillator();
+        const droneGain = ctx.createGain();
+        droneOsc1.type = "sine";
+        droneOsc2.type = "triangle";
+        droneOsc1.frequency.setValueAtTime(65.41, ctx.currentTime); // C2
+        droneOsc2.frequency.setValueAtTime(98.00, ctx.currentTime); // G2
+        droneGain.gain.setValueAtTime(0.09, ctx.currentTime);
+
+        const droneFilter = ctx.createBiquadFilter();
+        droneFilter.type = "lowpass";
+        droneFilter.frequency.setValueAtTime(220, ctx.currentTime);
+
+        droneOsc1.connect(droneFilter);
+        droneOsc2.connect(droneFilter);
+        droneFilter.connect(droneGain);
+        droneGain.connect(masterGain);
+
+        droneOsc1.start();
+        droneOsc2.start();
+
+        STATE.audio = {
+          enabled: true,
+          ctx,
+          masterGain,
+          delay,
+          analyser,
+          freqData,
+          bassEnergy: 0.2,
+          highEnergy: 0.1,
+          lastFreq: 432.0
+        };
+
+        updateAudioButtonUI();
+        triggerLydianChime(4, 0.22);
+        showToast("Generative Lydian Audio Engine Online", "cyan");
+      } catch (e) {
+        showToast("Audio Context blocked by browser policy", "amber");
+      }
+    }
+
+    function toggleAudioEngine() {
+      if (!STATE.audio.ctx) {
+        initAudioEngine();
+        return;
+      }
+      STATE.audio.enabled = !STATE.audio.enabled;
+      if (STATE.audio.enabled) {
+        STATE.audio.ctx.resume();
+        STATE.audio.masterGain.gain.setTargetAtTime(0.28, STATE.audio.ctx.currentTime, 0.1);
+        triggerLydianChime(6, 0.18);
+      } else {
+        STATE.audio.masterGain.gain.setTargetAtTime(0.0001, STATE.audio.ctx.currentTime, 0.1);
+      }
+      updateAudioButtonUI();
+    }
+
+    function updateAudioButtonUI() {
+      const label = document.getElementById("audio-btn-label");
+      const btn = document.getElementById("audio-toggle-btn");
+      if (STATE.audio.enabled) {
+        label.textContent = "AUDIO: ACTIVE";
+        btn.classList.add("active");
+      } else {
+        label.textContent = "AUDIO: MUTED";
+        btn.classList.remove("active");
+      }
+    }
+
+    function triggerLydianChime(noteIndex = null, volume = 0.14) {
+      if (!STATE.audio.enabled || !STATE.audio.ctx) return;
+      const ctx = STATE.audio.ctx;
+      const now = ctx.currentTime;
+
+      const idx = noteIndex !== null
+        ? Math.abs(noteIndex) % LYDIAN_FREQS.length
+        : Math.floor(Math.random() * LYDIAN_FREQS.length);
+      const freq = LYDIAN_FREQS[idx];
+      STATE.audio.lastFreq = freq;
+
+      const osc = ctx.createOscillator();
+      const subOsc = ctx.createOscillator();
+      const env = ctx.createGain();
+
+      osc.type = "sine";
+      subOsc.type = "triangle";
+      osc.frequency.setValueAtTime(freq, now);
+      subOsc.frequency.setValueAtTime(freq * 1.5, now); // Shimmering fifth overtone
+
+      const subGain = ctx.createGain();
+      subGain.gain.setValueAtTime(0.25, now);
+
+      env.gain.setValueAtTime(0.0001, now);
+      env.gain.exponentialRampToValueAtTime(volume, now + 0.025);
+      env.gain.exponentialRampToValueAtTime(0.0001, now + 1.65);
+
+      osc.connect(env);
+      subOsc.connect(subGain);
+      subGain.connect(env);
+
+      env.connect(STATE.audio.masterGain);
+      env.connect(STATE.audio.delay);
+
+      osc.start(now);
+      subOsc.start(now);
+      osc.stop(now + 1.7);
+      subOsc.stop(now + 1.7);
+    }
+
+    function updateAudioTelemetry() {
+      if (!STATE.audio.enabled || !STATE.audio.analyser) {
+        STATE.audio.bassEnergy *= 0.94;
+        STATE.audio.highEnergy *= 0.94;
+        return;
+      }
+      STATE.audio.analyser.getByteFrequencyData(STATE.audio.freqData);
+      let bass = 0;
+      let high = 0;
+      for (let i = 0; i < 8; i++) bass += STATE.audio.freqData[i];
+      for (let i = 16; i < 40; i++) high += STATE.audio.freqData[i];
+      STATE.audio.bassEnergy = (bass / (8 * 255));
+      STATE.audio.highEnergy = (high / (24 * 255));
+    }
+
+    // ============================================================================
+    // 2. WEBGL GLSL RAYMARCHED COSMIC MANIFOLD & IRIDESCENT FLUID SHADER
+    // ============================================================================
+    const glCanvas = document.getElementById("gl-canvas");
+    const gl = glCanvas.getContext("webgl") || glCanvas.getContext("experimental-webgl");
+
+    const VERTEX_SHADER_SRC = `
+      attribute vec2 a_position;
+      void main() {
+        gl_Position = vec4(a_position, 0.0, 1.0);
+      }
+    `;
+
+    const FRAGMENT_SHADER_SRC = `
+      precision highp float;
+
+      uniform vec2 u_resolution;
+      uniform float u_time;
+      uniform vec2 u_mouse;
+      uniform vec2 u_velocity;
+      uniform float u_turbulence;
+      uniform float u_chromatic;
+      uniform float u_bass;
+      uniform float u_mode;
+      uniform float u_pulse;
+
+      // Cosine-based IQ iridescent palette
+      vec3 palette(float t) {
+        vec3 a = vec3(0.06, 0.08, 0.15);
+        vec3 b = vec3(0.28, 0.32, 0.45);
+        vec3 c = vec3(1.0, 1.0, 1.0);
+        vec3 d = vec3(0.00, 0.33, 0.67);
+        return a + b * cos(6.28318 * (c * t + d));
+      }
+
+      mat2 rot(float a) {
+        float s = sin(a), c = cos(a);
+        return mat2(c, -s, s, c);
+      }
+
+      // Smooth Domain-Warped Fractal Brownian Motion & Toroidal Manifold SDF
+      float fbm(vec2 p) {
+        float v = 0.0;
+        float amp = 0.5;
+        mat2 m = rot(0.55);
+        for (int i = 0; i < 5; i++) {
+          v += amp * sin(p.x * 2.1 + sin(p.y * 2.3 + u_time * 0.4));
+          p = m * p * 2.04 + vec2(1.7, 9.2);
+          amp *= 0.5;
+        }
+        return v;
+      }
+
+      void main() {
+        vec2 uv = (gl_FragCoord.xy * 2.0 - u_resolution.xy) / min(u_resolution.x, u_resolution.y);
+        vec2 mouseNorm = (u_mouse * 2.0 - 1.0) * vec2(u_resolution.x / min(u_resolution.x, u_resolution.y), u_resolution.y / min(u_resolution.x, u_resolution.y));
+
+        // Gravitational cursor lensing & velocity swirl
+        vec2 toMouse = uv - mouseNorm;
+        float distMouse = length(toMouse);
+        float lens = exp(-distMouse * 2.4) * (0.35 + length(u_velocity) * 2.5 + u_pulse * 0.4);
+        uv -= toMouse * lens * 0.45;
+        uv *= rot(lens * 0.65 + u_time * 0.03);
+
+        // Domain warping layers
+        float t = u_time * (0.22 + u_bass * 0.25);
+        vec2 q = vec2(
+          fbm(uv * u_turbulence + vec2(0.0, t)),
+          fbm(uv * u_turbulence + vec2(5.2, -t * 0.8))
+        );
+
+        vec2 r = vec2(
+          fbm(uv * 1.4 + 2.2 * q + vec2(1.7, 9.2) + 0.15 * t),
+          fbm(uv * 1.4 + 2.2 * q + vec2(8.3, 2.8) - 0.12 * t)
+        );
+
+        float f = fbm(uv + u_turbulence * r);
+
+        // Chromatic aberration offsets for obsidian prism highlights
+        float fR = fbm(uv + u_turbulence * r + vec2(0.018 * u_chromatic, 0.0));
+        float fB = fbm(uv + u_turbulence * r - vec2(0.018 * u_chromatic, 0.0));
+
+        // Mode-dependent harmonic tinting
+        float modeShift = u_mode * 0.18;
+        vec3 colR = palette(fR + length(q) * 0.5 + modeShift + u_time * 0.04);
+        vec3 colG = palette(f  + length(q) * 0.5 + modeShift + u_time * 0.04);
+        vec3 colB = palette(fB + length(q) * 0.5 + modeShift + u_time * 0.04);
+
+        vec3 color = vec3(colR.r, colG.g, colB.b);
+
+        // Bioluminescent caustic filaments (Cyan / Violet / Gold)
+        float filament = smoothstep(0.08, 0.0, abs(f - 0.15));
+        float goldVein = smoothstep(0.04, 0.0, abs(r.x + r.y - 0.35));
+
+        vec3 cyanAccent = vec3(0.0, 0.94, 1.0);
+        vec3 violetAccent = vec3(0.62, 0.30, 0.87);
+        vec3 goldAccent = vec3(1.0, 0.75, 0.05);
+
+        color += cyanAccent * filament * (0.35 + u_bass * 0.6);
+        color += violetAccent * smoothstep(0.2, 0.9, length(q)) * 0.35;
+        color += goldAccent * goldVein * (0.28 + u_pulse * 0.5);
+
+        // Cursor bioluminescent aura
+        color += cyanAccent * exp(-distMouse * 4.2) * (0.28 + u_pulse * 0.45);
+
+        // Deep obsidian vignette for supreme HUD legibility
+        float vignette = 1.0 - smoothstep(0.55, 1.85, length((gl_FragCoord.xy / u_resolution.xy) * 2.0 - 1.0));
+        color *= mix(0.22, 0.88, vignette);
+
+        // Gamma curve & deep obsidian floor
+        color = pow(max(color, vec3(0.015, 0.018, 0.032)), vec3(0.92));
+
+        gl_FragColor = vec4(color, 1.0);
+      }
+    `;
+
+    let glProgram = null;
+    let glUniforms = {};
+
+    function initWebGL() {
+      if (!gl) return;
+      function compile(type, src) {
+        const s = gl.createShader(type);
+        gl.shaderSource(s, src);
+        gl.compileShader(s);
+        if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+          console.error(gl.getShaderInfoLog(s));
+          return null;
+        }
+        return s;
+      }
+
+      const vs = compile(gl.VERTEX_SHADER, VERTEX_SHADER_SRC);
+      const fs = compile(gl.FRAGMENT_SHADER, FRAGMENT_SHADER_SRC);
+      if (!vs || !fs) return;
+
+      glProgram = gl.createProgram();
+      gl.attachShader(glProgram, vs);
+      gl.attachShader(glProgram, fs);
+      gl.linkProgram(glProgram);
+      gl.useProgram(glProgram);
+
+      const buf = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+        -1, -1,  1, -1, -1,  1,
+        -1,  1,  1, -1,  1,  1
+      ]), gl.STATIC_DRAW);
+
+      const posLoc = gl.getAttribLocation(glProgram, "a_position");
+      gl.enableVertexAttribArray(posLoc);
+      gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+
+      glUniforms = {
+        resolution: gl.getUniformLocation(glProgram, "u_resolution"),
+        time: gl.getUniformLocation(glProgram, "u_time"),
+        mouse: gl.getUniformLocation(glProgram, "u_mouse"),
+        velocity: gl.getUniformLocation(glProgram, "u_velocity"),
+        turbulence: gl.getUniformLocation(glProgram, "u_turbulence"),
+        chromatic: gl.getUniformLocation(glProgram, "u_chromatic"),
+        bass: gl.getUniformLocation(glProgram, "u_bass"),
+        mode: gl.getUniformLocation(glProgram, "u_mode"),
+        pulse: gl.getUniformLocation(glProgram, "u_pulse")
+      };
+    }
+
+    function renderWebGL() {
+      if (!gl || !glProgram) return;
+      gl.viewport(0, 0, glCanvas.width, glCanvas.height);
+      gl.uniform2f(glUniforms.resolution, glCanvas.width, glCanvas.height);
+      gl.uniform1f(glUniforms.time, STATE.time);
+      gl.uniform2f(glUniforms.mouse, STATE.mouse.x, 1.0 - STATE.mouse.y);
+      gl.uniform2f(glUniforms.velocity, STATE.mouse.vx, -STATE.mouse.vy);
+      gl.uniform1f(glUniforms.turbulence, STATE.params.turbulence);
+      gl.uniform1f(glUniforms.chromatic, STATE.params.chromatic);
+      gl.uniform1f(glUniforms.bass, STATE.audio.bassEnergy);
+      gl.uniform1f(glUniforms.mode, STATE.mode);
+      gl.uniform1f(glUniforms.pulse, STATE.merklePulse);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+    }
+
+    // ============================================================================
+    // 3. 3D SPATIAL MERKLE LATTICE, LORENZ ATTRACTOR & BOIDS ENGINE (2D/3D CANVAS)
+    // ============================================================================
+    const spatialCanvas = document.getElementById("spatial-canvas");
+    const ctx = spatialCanvas.getContext("2d");
+
+    // 3D Projection Helper
+    function project3D(x, y, z, width, height) {
+      // Rotate around Y then X
+      const cosY = Math.cos(STATE.camera.rotY);
+      const sinY = Math.sin(STATE.camera.rotY);
+      const x1 = x * cosY - z * sinY;
+      const z1 = z * cosY + x * sinY;
+
+      const cosX = Math.cos(STATE.camera.rotX);
+      const sinX = Math.sin(STATE.camera.rotX);
+      const y2 = y * cosX - z1 * sinX;
+      const z2 = z1 * cosX + y * sinX;
+
+      const fov = 620 * STATE.camera.zoom;
+      const distance = 520;
+      const scale = fov / (distance + z2);
+
+      return {
+        x: width * 0.5 + x1 * scale,
+        y: height * 0.5 + y2 * scale,
+        scale: Math.max(0.05, scale),
+        z: z2
+      };
+    }
+
+    // --- ALGORITHMIC MERKLE NODES (Interactive 3D Graph) ---
+    const ALGO_NODES = [
+      {
+        id: "mandelbrot",
+        label: "MANDELBROT // Z² + C",
+        tag: "COMPLEX DYNAMICS",
+        color: "#00f0ff",
+        pos: { x: 0, y: -115, z: 0 },
+        parent: null,
+        desc: "Iterative quadratic recurrence zₙ₊₁ = zₙ² + c revealing self-similar boundary infinity across the complex plane.",
+        hash: computeMerkleHash("MANDELBROT_ROOT_Z2_PLUS_C")
+      },
+      {
+        id: "lorenz",
+        label: "LORENZ ATTRACTOR",
+        tag: "DETERMINISTIC CHAOS",
+        color: "#9d4edd",
+        pos: { x: -135, y: -15, z: 75 },
+        parent: 0,
+        desc: "Coupled atmospheric convection differential equations exhibiting sensitive dependence on initial conditions.",
+        hash: computeMerkleHash("LORENZ_SIGMA10_RHO28_BETA8_3")
+      },
+      {
+        id: "boids",
+        label: "BOIDS SWARM AI",
+        tag: "EMERGENT BEHAVIOR",
+        color: "#ffbe0b",
+        pos: { x: 135, y: -15, z: -75 },
+        parent: 0,
+        desc: "Craig Reynolds' distributed behavioral model producing organic flocking from three local steering rules.",
+        hash: computeMerkleHash("REYNOLDS_BOIDS_SEPARATION_COHESION")
+      },
+      {
+        id: "automata",
+        label: "CELLULAR AUTOMATA",
+        tag: "TURING COMPLETENESS",
+        color: "#10b981",
+        pos: { x: -175, y: 105, z: -60 },
+        parent: 1,
+        desc: "Conway's zero-player discrete dynamical grid demonstrating universal computation from local neighbor states.",
+        hash: computeMerkleHash("CONWAY_LIFE_B3_S23_LATTICE")
+      },
+      {
+        id: "merkle",
+        label: "MERKLE SHA-256 DAG",
+        tag: "ZERO-TRUST CRYPTO",
+        color: "#38bdf8",
+        pos: { x: -45, y: 115, z: 120 },
+        parent: 1,
+        desc: "Cryptographic hash tree guaranteeing O(log n) state verification and tamper-evident distributed consensus.",
+        hash: computeMerkleHash("MERKLE_PATRICIA_TRIE_VERIFIED")
+      },
+      {
+        id: "fourier",
+        label: "FFT SPECTRAL SYNTH",
+        tag: "HARMONIC ANALYSIS",
+        color: "#f472b6",
+        pos: { x: 75, y: 115, z: -115 },
+        parent: 2,
+        desc: "Cooley-Tukey Fast Fourier Transform decomposing time-domain waveforms into orthogonal Lydian frequencies.",
+        hash: computeMerkleHash("COOLEY_TUKEY_FFT_432HZ_LYDIAN")
+      },
+      {
+        id: "astar",
+        label: "A* GEODESIC SEARCH",
+        tag: "GRAPH TOPOLOGY",
+        color: "#fb923c",
+        pos: { x: 185, y: 100, z: 65 },
+        parent: 2,
+        desc: "Admissible heuristic pathfinding f(n) = g(n) + h(n) traversing curved Riemannian manifolds.",
+        hash: computeMerkleHash("DIJKSTRA_ASTAR_HEURISTIC_MANIFOLD")
+      }
+    ];
+
+    let projectedNodes = [];
+
+    // --- LORENZ STRANGE ATTRACTOR TRAIL ---
+    const lorenzPoints = [];
+    let lx = 0.1, ly = 0, lz = 0;
+    for (let i = 0; i < 650; i++) {
+      const dt = 0.006;
+      const sigma = 10.0;
+      const beta = 8.0 / 3.0;
+      const dx = sigma * (ly - lx) * dt;
+      const dy = (lx * (28.0 - lz) - ly) * dt;
+      const dz = (lx * ly - beta * lz) * dt;
+      lx += dx; ly += dy; lz += dz;
+      lorenzPoints.push({ x: lx * 6.5, y: (lz - 25) * 6.5, z: ly * 6.5 });
+    }
+
+    function stepLorenz() {
+      const dt = 0.007;
+      const sigma = 10.0;
+      const rho = STATE.params.rho;
+      const beta = 8.0 / 3.0;
+      for (let s = 0; s < 3; s++) {
+        const dx = sigma * (ly - lx) * dt;
+        const dy = (lx * (rho - lz) - ly) * dt;
+        const dz = (lx * ly - beta * lz) * dt;
+        lx += dx; ly += dy; lz += dz;
+        lorenzPoints.push({ x: lx * 6.5, y: (lz - 25) * 6.5, z: ly * 6.5 });
+        if (lorenzPoints.length > 750) lorenzPoints.shift();
+      }
+    }
+
+    // --- 3D BOIDS FLOCKING SWARM ---
+    const BOID_COUNT = 85;
+    const boids = Array.from({ length: BOID_COUNT }, (_, i) => ({
+      x: (Math.random() - 0.5) * 320,
+      y: (Math.random() - 0.5) * 240,
+      z: (Math.random() - 0.5) * 320,
+      vx: (Math.random() - 0.5) * 2.5,
+      vy: (Math.random() - 0.5) * 2.5,
+      vz: (Math.random() - 0.5) * 2.5,
+      hue: i % 3 === 0 ? "#00f0ff" : i % 3 === 1 ? "#9d4edd" : "#ffbe0b"
+    }));
+
+    function stepBoids() {
+      const cohesionWeight = STATE.params.cohesion * 0.0045;
+      const alignWeight = STATE.params.cohesion * 0.04;
+      const sepDist = 34;
+      const neighborDist = 95;
+
+      for (let i = 0; i < boids.length; i++) {
+        const b = boids[i];
+        let avgX = 0, avgY = 0, avgZ = 0;
+        let avgVx = 0, avgVy = 0, avgVz = 0;
+        let sepX = 0, sepY = 0, sepZ = 0;
+        let count = 0;
+
+        for (let j = 0; j < boids.length; j++) {
+          if (i === j) continue;
+          const o = boids[j];
+          const dx = o.x - b.x;
+          const dy = o.y - b.y;
+          const dz = o.z - b.z;
+          const d = Math.hypot(dx, dy, dz);
+
+          if (d < neighborDist && d > 0.001) {
+            avgX += o.x; avgY += o.y; avgZ += o.z;
+            avgVx += o.vx; avgVy += o.vy; avgVz += o.vz;
+            count++;
+
+            if (d < sepDist) {
+              sepX -= (dx / d) * 0.16;
+              sepY -= (dy / d) * 0.16;
+              sepZ -= (dz / d) * 0.16;
+            }
+          }
+        }
+
+        if (count > 0) {
+          avgX /= count; avgY /= count; avgZ /= count;
+          avgVx /= count; avgVy /= count; avgVz /= count;
+          b.vx += (avgX - b.x) * cohesionWeight + (avgVx - b.vx) * alignWeight;
+          b.vy += (avgY - b.y) * cohesionWeight + (avgVy - b.vy) * alignWeight;
+          b.vz += (avgZ - b.z) * cohesionWeight + (avgVz - b.vz) * alignWeight;
+        }
+
+        b.vx += sepX - b.x * 0.0008;
+        b.vy += sepY - b.y * 0.0008;
+        b.vz += sepZ - b.z * 0.0008;
+
+        // Speed limit
+        const speed = Math.hypot(b.vx, b.vy, b.vz);
+        const maxSpeed = STATE.mode === 2 ? 3.8 : 2.3;
+        if (speed > maxSpeed) {
+          b.vx = (b.vx / speed) * maxSpeed;
+          b.vy = (b.vy / speed) * maxSpeed;
+          b.vz = (b.vz / speed) * maxSpeed;
+        }
+
+        b.x += b.vx;
+        b.y += b.vy;
+        b.z += b.vz;
+      }
+    }
+
+    // --- RENDER 3D SPATIAL LAYER ---
+    function renderSpatialCanvas() {
+      const w = spatialCanvas.width;
+      const h = spatialCanvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      // Subtle Orbital Wireframe Geodesic Rings
+      ctx.save();
+      ctx.strokeStyle = "rgba(0, 240, 255, 0.08)";
+      ctx.lineWidth = 1;
+      for (let r = 0; r < 2; r++) {
+        ctx.beginPath();
+        const radius = r === 0 ? 220 : 275;
+        for (let a = 0; a <= 64; a++) {
+          const theta = (a / 64) * Math.PI * 2;
+          const px = r === 0 ? Math.cos(theta) * radius : Math.cos(theta) * radius;
+          const py = r === 0 ? Math.sin(theta) * 35 : Math.sin(theta) * radius * 0.5;
+          const pz = r === 0 ? Math.sin(theta) * radius : Math.cos(theta) * radius * 0.5;
+          const p = project3D(px, py, pz, w, h);
+          if (a === 0) ctx.moveTo(p.x, p.y);
+          else ctx.lineTo(p.x, p.y);
+        }
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // 1. Render Lorenz Strange Attractor Ribbon
+      stepLorenz();
+      const lorenzAlpha = STATE.mode === 1 ? 0.85 : 0.28;
+      ctx.save();
+      ctx.lineWidth = STATE.mode === 1 ? 2.2 : 1.1;
+      for (let i = 1; i < lorenzPoints.length; i++) {
+        const p1 = project3D(lorenzPoints[i - 1].x, lorenzPoints[i - 1].y, lorenzPoints[i - 1].z, w, h);
+        const p2 = project3D(lorenzPoints[i].x, lorenzPoints[i].y, lorenzPoints[i].z, w, h);
+        const ratio = i / lorenzPoints.length;
+        ctx.strokeStyle = `hsla(${265 + ratio * 75}, 90%, 65%, ${ratio * lorenzAlpha})`;
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // 2. Render 3D Boids Swarm
+      stepBoids();
+      const boidAlpha = STATE.mode === 2 ? 0.95 : 0.45;
+      for (let i = 0; i < boids.length; i++) {
+        const b = boids[i];
+        const p = project3D(b.x, b.y, b.z, w, h);
+        const pTail = project3D(b.x - b.vx * 4.5, b.y - b.vy * 4.5, b.z - b.vz * 4.5, w, h);
+        ctx.save();
+        ctx.globalAlpha = boidAlpha * Math.min(1, p.scale);
+        ctx.strokeStyle = b.hue;
+        ctx.lineWidth = Math.max(1.2, 2.4 * p.scale);
+        ctx.beginPath();
+        ctx.moveTo(pTail.x, pTail.y);
+        ctx.lineTo(p.x, p.y);
+        ctx.stroke();
+
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, Math.max(1.2, 2.0 * p.scale), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // 3. Render Cryptographic Merkle Lattice Edges & Interactive Nodes
+      projectedNodes = ALGO_NODES.map((node, index) => {
+        const bobY = Math.sin(STATE.time * 1.6 + index * 1.1) * 7;
+        const proj = project3D(node.pos.x, node.pos.y + bobY, node.pos.z, w, h);
+        return { ...node, index, proj };
+      });
+
+      // Draw Merkle DAG edges with animated cryptographic packet pulses
+      const edgeBoost = STATE.mode === 3 ? 1.0 : 0.55;
+      projectedNodes.forEach((node) => {
+        if (node.parent !== null) {
+          const parent = projectedNodes[node.parent];
+          const grad = ctx.createLinearGradient(parent.proj.x, parent.proj.y, node.proj.x, node.proj.y);
+          grad.addColorStop(0, parent.color);
+          grad.addColorStop(1, node.color);
+
+          ctx.save();
+          ctx.globalAlpha = 0.35 * edgeBoost + STATE.merklePulse * 0.4;
+          ctx.strokeStyle = grad;
+          ctx.lineWidth = STATE.mode === 3 ? 2.0 : 1.25;
+          ctx.setLineDash([4, 4]);
+          ctx.lineDashOffset = -STATE.time * 24;
+          ctx.beginPath();
+          ctx.moveTo(parent.proj.x, parent.proj.y);
+          ctx.lineTo(node.proj.x, node.proj.y);
+          ctx.stroke();
+
+          // Travelling verification photon along edge
+          const packetT = (STATE.time * 0.65 + node.index * 0.3) % 1;
+          const px = parent.proj.x + (node.proj.x - parent.proj.x) * packetT;
+          const py = parent.proj.y + (node.proj.y - parent.proj.y) * packetT;
+          ctx.globalAlpha = 0.9;
+          ctx.fillStyle = "#ffffff";
+          ctx.beginPath();
+          ctx.arc(px, py, 2.2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      });
+
+      // Draw Nodes sorted back-to-front by Z depth
+      const sortedNodes = [...projectedNodes].sort((a, b) => b.proj.z - a.proj.z);
+      sortedNodes.forEach((node) => {
+        const { x, y, scale } = node.proj;
+        const isSelected = STATE.selectedNode && STATE.selectedNode.id === node.id;
+        const radius = Math.max(7, (isSelected ? 14 : 10) * scale);
+
+        ctx.save();
+        // Outer bioluminescent halo
+        const halo = ctx.createRadialGradient(x, y, 1, x, y, radius * 2.8);
+        halo.addColorStop(0, node.color);
+        halo.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.globalAlpha = isSelected ? 0.65 : 0.32;
+        ctx.fillStyle = halo;
+        ctx.beginPath();
+        ctx.arc(x, y, radius * 2.8, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Core node sphere
+        ctx.globalAlpha = 0.95;
+        ctx.fillStyle = "#080b14";
+        ctx.strokeStyle = isSelected ? "#ffffff" : node.color;
+        ctx.lineWidth = isSelected ? 2.5 : 1.8;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Inner core dot
+        ctx.fillStyle = node.color;
+        ctx.beginPath();
+        ctx.arc(x, y, radius * 0.42, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Crisp Monospace Label
+        if (scale > 0.55) {
+          ctx.font = `600 ${Math.round(10 * Math.min(1.15, scale))}px "JetBrains Mono", monospace`;
+          ctx.fillStyle = isSelected ? "#ffffff" : "rgba(241, 245, 249, 0.88)";
+          ctx.textAlign = "center";
+          ctx.fillText(node.label, x, y + radius + 14);
+        }
+        ctx.restore();
+      });
+    }
+
+    // ============================================================================
+    // 4. LIVE MINI-SIMULATION ENGINE (INSIDE NODE INSPECTOR MODAL)
+    // ============================================================================
+    const miniCanvas = document.getElementById("mini-sim-canvas");
+    const miniCtx = miniCanvas.getContext("2d");
+    let lifeGrid = Array.from({ length: 24 }, () =>
+      Array.from({ length: 48 }, () => (Math.random() > 0.72 ? 1 : 0))
+    );
+
+    function renderMiniSimulation() {
+      if (!STATE.selectedNode) return;
+      const w = miniCanvas.width = miniCanvas.clientWidth || 280;
+      const h = miniCanvas.height = miniCanvas.clientHeight || 128;
+      const statEl = document.getElementById("mini-sim-stat");
+      const id = STATE.selectedNode.id;
+
+      miniCtx.fillStyle = "#05070e";
+      miniCtx.fillRect(0, 0, w, h);
+
+      if (id === "mandelbrot") {
+        // Real-time animated Julia/Mandelbrot fractal zoomer
+        const zoom = 1.4 + Math.sin(STATE.time * 0.5) * 0.6;
+        const cx = -0.7269 + Math.cos(STATE.time * 0.35) * 0.04;
+        const cy = 0.1889 + Math.sin(STATE.time * 0.35) * 0.04;
+        const step = 3;
+        for (let py = 0; py < h; py += step) {
+          for (let px = 0; px < w; px += step) {
+            let zx = ((px / w) * 2 - 1) * (w / h) / zoom;
+            let zy = ((py / h) * 2 - 1) / zoom;
+            let iter = 0;
+            const maxIter = 28;
+            while (zx * zx + zy * zy < 4 && iter < maxIter) {
+              const tmp = zx * zx - zy * zy + cx;
+              zy = 2 * zx * zy + cy;
+              zx = tmp;
+              iter++;
+            }
+            if (iter < maxIter) {
+              miniCtx.fillStyle = `hsl(${185 + iter * 6}, 95%, ${30 + iter * 2}%)`;
+              miniCtx.fillRect(px, py, step, step);
+            }
+          }
+        }
+        statEl.textContent = `JULIA C: ${cx.toFixed(3)} + ${cy.toFixed(3)}i`;
+      } else if (id === "automata") {
+        // Conway's Game of Life
+        const rows = lifeGrid.length;
+        const cols = lifeGrid[0].length;
+        const cw = w / cols;
+        const ch = h / rows;
+
+        if (Math.floor(STATE.time * 12) % 2 === 0) {
+          const next = lifeGrid.map(arr => [...arr]);
+          let aliveCount = 0;
+          for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+              let neighbors = 0;
+              for (let dr = -1; dr <= 1; dr++) {
+                for (let dc = -1; dc <= 1; dc++) {
+                  if (dr === 0 && dc === 0) continue;
+                  const nr = (r + dr + rows) % rows;
+                  const nc = (c + dc + cols) % cols;
+                  neighbors += lifeGrid[nr][nc];
+                }
+              }
+              if (lifeGrid[r][c] === 1) {
+                next[r][c] = neighbors === 2 || neighbors === 3 ? 1 : 0;
+              } else {
+                next[r][c] = neighbors === 3 ? 1 : 0;
+              }
+              if (next[r][c]) aliveCount++;
+            }
+          }
+          if (aliveCount < 18) {
+            next[Math.floor(Math.random() * rows)][Math.floor(Math.random() * cols)] = 1;
+          }
+          lifeGrid = next;
+          statEl.textContent = `CELLS ALIVE: ${aliveCount}`;
+        }
+
+        miniCtx.fillStyle = "#10b981";
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            if (lifeGrid[r][c]) {
+              miniCtx.fillRect(c * cw + 0.5, r * ch + 0.5, cw - 1, ch - 1);
+            }
+          }
+        }
+      } else if (id === "fourier") {
+        // Harmonic Fourier Waveform Synthesizer
+        miniCtx.strokeStyle = "#f472b6";
+        miniCtx.lineWidth = 2;
+        miniCtx.beginPath();
+        for (let x = 0; x < w; x++) {
+          const t = (x / w) * Math.PI * 4 + STATE.time * 4;
+          const y = h * 0.5
+            + Math.sin(t) * 24
+            + Math.sin(t * 2.0 + STATE.time) * 12
+            + Math.cos(t * 3.5) * 7;
+          if (x === 0) miniCtx.moveTo(x, y);
+          else miniCtx.lineTo(x, y);
+        }
+        miniCtx.stroke();
+        statEl.textContent = `FUNDAMENTAL: ${STATE.audio.lastFreq.toFixed(1)} Hz`;
+      } else {
+        // Lorenz / Geodesic / Merkle Phase Orbit Preview
+        miniCtx.strokeStyle = STATE.selectedNode.color;
+        miniCtx.lineWidth = 1.6;
+        miniCtx.beginPath();
+        for (let i = 0; i < 120; i++) {
+          const a = (i / 120) * Math.PI * 2 + STATE.time;
+          const r = 34 + Math.sin(a * 3 + STATE.time * 2) * 14;
+          const px = w * 0.5 + Math.cos(a) * r * 1.8;
+          const py = h * 0.5 + Math.sin(a * 2) * r * 0.75;
+          if (i === 0) miniCtx.moveTo(px, py);
+          else miniCtx.lineTo(px, py);
+        }
+        miniCtx.stroke();
+        statEl.textContent = `ENTROPY: ${STATE.entropy.toFixed(3)} BITS`;
+      }
+    }
+
+    // ============================================================================
+    // 5. INTERACTION HANDLERS, INSPECTOR & SYNAPSE CLI
+    // ============================================================================
+    function openNodeInspector(node) {
+      STATE.selectedNode = node;
+      const panel = document.getElementById("node-inspector");
+      document.getElementById("inspector-badge").style.backgroundColor = node.color;
+      document.getElementById("inspector-algo-tag").textContent = node.tag;
+      document.getElementById("inspector-algo-tag").style.color = node.color;
+      document.getElementById("inspector-title").textContent = node.label;
+      document.getElementById("inspector-desc").textContent = node.desc;
+      document.getElementById("inspector-hash").textContent = node.hash;
+      panel.classList.remove("hidden");
+
+      STATE.merklePulse = 1.0;
+      triggerLydianChime(node.index * 2 + 1, 0.18);
+    }
+
+    document.getElementById("close-inspector-btn").addEventListener("click", () => {
+      STATE.selectedNode = null;
+      document.getElementById("node-inspector").classList.add("hidden");
+    });
+
+    // Mode Switching
+    function setMode(modeIndex) {
+      STATE.mode = modeIndex;
+      document.querySelectorAll(".mode-btn").forEach((btn) => {
+        const idx = parseInt(btn.dataset.mode, 10);
+        btn.classList.toggle("active", idx === modeIndex);
+      });
+      document.getElementById("active-subtitle").textContent = MODE_META[modeIndex].subtitle;
+      document.getElementById("interaction-hint").textContent = MODE_META[modeIndex].hint;
+      STATE.merklePulse = 0.85;
+      triggerLydianChime(modeIndex * 3, 0.16);
+    }
+
+    document.querySelectorAll(".mode-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        setMode(parseInt(btn.dataset.mode, 10));
+      });
+    });
+
+    // Audio Toggle
+    document.getElementById("audio-toggle-btn").addEventListener("click", toggleAudioEngine);
+
+    // Drawer Toggle
+    const labDrawer = document.getElementById("lab-drawer");
+    let drawerOpen = false;
+    document.getElementById("drawer-toggle-btn").addEventListener("click", () => {
+      drawerOpen = !drawerOpen;
+      if (drawerOpen) {
+        labDrawer.classList.remove("translate-x-[120%]", "opacity-0");
+      } else {
+        labDrawer.classList.add("translate-x-[120%]", "opacity-0");
+      }
+      triggerLydianChime(5, 0.1);
+    });
+
+    // Parameter Sliders
+    function bindSlider(id, valId, key, decimals = 2) {
+      const slider = document.getElementById(id);
+      const valEl = document.getElementById(valId);
+      slider.addEventListener("input", (e) => {
+        const v = parseFloat(e.target.value);
+        STATE.params[key] = v;
+        valEl.textContent = v.toFixed(decimals);
+      });
+    }
+    bindSlider("param-turbulence", "val-turbulence", "turbulence", 2);
+    bindSlider("param-rho", "val-rho", "rho", 1);
+    bindSlider("param-cohesion", "val-cohesion", "cohesion", 2);
+    bindSlider("param-chromatic", "val-chromatic", "chromatic", 2);
+
+    document.getElementById("reset-params-btn").addEventListener("click", () => {
+      STATE.params = { turbulence: 1.35, rho: 28.0, cohesion: 1.20, chromatic: 0.65 };
+      document.getElementById("param-turbulence").value = 1.35;
+      document.getElementById("val-turbulence").textContent = "1.35";
+      document.getElementById("param-rho").value = 28.0;
+      document.getElementById("val-rho").textContent = "28.0";
+      document.getElementById("param-cohesion").value = 1.20;
+      document.getElementById("val-cohesion").textContent = "1.20";
+      document.getElementById("param-chromatic").value = 0.65;
+      document.getElementById("val-chromatic").textContent = "0.65";
+      showToast("Differential constants restored to equilibrium", "cyan");
+    });
+
+    // Interactive CLI / REPL
+    const cliForm = document.getElementById("cli-form");
+    const cliInput = document.getElementById("cli-input");
+    const cliOutput = document.getElementById("cli-output");
+
+    function appendCliLine(text, colorClass = "text-slate-300") {
+      const div = document.createElement("div");
+      div.className = colorClass;
+      div.textContent = text;
+      cliOutput.appendChild(div);
+      cliOutput.scrollTop = cliOutput.scrollHeight;
+    }
+
+    cliForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const raw = cliInput.value.trim();
+      if (!raw) return;
+      cliInput.value = "";
+      appendCliLine(`> ${raw}`, "text-white");
+
+      const parts = raw.split(" ");
+      const cmd = parts[0].toLowerCase();
+      const arg = parts.slice(1).join(" ");
+
+      if (cmd === "help") {
+        appendCliLine("Available commands:", "text-cyan-300");
+        appendCliLine("  hash <str>  -> Compute Merkle avalanche hash", "text-slate-400");
+        appendCliLine("  pulse       -> Trigger harmonic manifold wave", "text-slate-400");
+        appendCliLine("  morph <0-3> -> Switch topological mode", "text-slate-400");
+        appendCliLine("  clear       -> Clear terminal buffer", "text-slate-400");
+      } else if (cmd === "hash") {
+        const target = arg || "aether_synapse";
+        const digest = computeMerkleHash(target);
+        STATE.merklePulse = 1.0;
+        triggerLydianChime(target.length, 0.18);
+        appendCliLine(`SHA-DAG: ${digest}`, "text-amber-300");
+      } else if (cmd === "pulse") {
+        STATE.merklePulse = 1.2;
+        triggerLydianChime(0, 0.22);
+        setTimeout(() => triggerLydianChime(3, 0.18), 110);
+        setTimeout(() => triggerLydianChime(7, 0.16), 220);
+        appendCliLine("Harmonic soliton emitted across lattice.", "text-emerald-400");
+      } else if (cmd === "morph") {
+        const m = parseInt(arg, 10);
+        if (!isNaN(m) && m >= 0 && m <= 3) {
+          setMode(m);
+          appendCliLine(`Morphed manifold to mode 0${m + 1}.`, "text-cyan-300");
+        } else {
+          appendCliLine("Usage: morph <0|1|2|3>", "text-rose-400");
+        }
+      } else if (cmd === "clear") {
+        cliOutput.innerHTML = "";
+      } else {
+        const digest = computeMerkleHash(raw);
+        appendCliLine(`Auto-hashed: ${digest}`, "text-violet-300");
+        STATE.merklePulse = 0.7;
+      }
+    });
+
+    // Pointer / Mouse / Touch Controls for 3D Orbit & Node Selection
+    let pointerDownPos = { x: 0, y: 0 };
+
+    function handlePointerDown(clientX, clientY) {
+      STATE.mouse.down = true;
+      pointerDownPos = { x: clientX, y: clientY };
+    }
+
+    function handlePointerMove(clientX, clientY) {
+      const nx = clientX / window.innerWidth;
+      const ny = clientY / window.innerHeight;
+      STATE.mouse.vx = (nx - STATE.mouse.tx) * 1.8;
+      STATE.mouse.vy = (ny - STATE.mouse.ty) * 1.8;
+      STATE.mouse.tx = nx;
+      STATE.mouse.ty = ny;
+
+      if (STATE.mouse.down) {
+        const dx = clientX - pointerDownPos.x;
+        const dy = clientY - pointerDownPos.y;
+        STATE.camera.targetRotY += dx * 0.0055;
+        STATE.camera.targetRotX = Math.max(-1.2, Math.min(1.2, STATE.camera.targetRotX + dy * 0.0055));
+        pointerDownPos = { x: clientX, y: clientY };
+      }
+    }
+
+    function handlePointerUp(clientX, clientY) {
+      STATE.mouse.down = false;
+      // Check if user clicked (minimal drag distance) on a 3D Merkle Node
+      const hitNode = projectedNodes.find((n) => {
+        const dist = Math.hypot(clientX - n.proj.x, clientY - n.proj.y);
+        return dist < 26;
+      });
+      if (hitNode) {
+        openNodeInspector(hitNode);
+      }
+    }
+
+    spatialCanvas.addEventListener("mousedown", (e) => handlePointerDown(e.clientX, e.clientY));
+    window.addEventListener("mousemove", (e) => handlePointerMove(e.clientX, e.clientY));
+    window.addEventListener("mouseup", (e) => handlePointerUp(e.clientX, e.clientY));
+
+    spatialCanvas.addEventListener("touchstart", (e) => {
+      if (e.touches.length > 0) {
+        handlePointerDown(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    }, { passive: true });
+
+    spatialCanvas.addEventListener("touchmove", (e) => {
+      if (e.touches.length > 0) {
+        handlePointerMove(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    }, { passive: true });
+
+    spatialCanvas.addEventListener("touchend", (e) => {
+      if (e.changedTouches.length > 0) {
+        handlePointerUp(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+      }
+    });
+
+    // Resize Handling
+    function resizeAllCanvases() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      glCanvas.width = Math.floor(window.innerWidth * dpr);
+      glCanvas.height = Math.floor(window.innerHeight * dpr);
+      spatialCanvas.width = window.innerWidth;
+      spatialCanvas.height = window.innerHeight;
+    }
+    window.addEventListener("resize", resizeAllCanvases);
+
+    // ============================================================================
+    // 6. MAIN 60FPS ANIMATION & TELEMETRY LOOP
+    // ============================================================================
+    let lastFrameTime = performance.now();
+    let frameCounter = 0;
+    let fpsAccumulator = 0;
+
+    function animate(now) {
+      const rawDt = (now - lastFrameTime) / 1000;
+      lastFrameTime = now;
+      STATE.dt = Math.min(rawDt, 0.05);
+      STATE.time += STATE.dt;
+
+      // Smooth spring damping for cursor & camera orbit
+      STATE.mouse.x += (STATE.mouse.tx - STATE.mouse.x) * 0.12;
+      STATE.mouse.y += (STATE.mouse.ty - STATE.mouse.y) * 0.12;
+      STATE.mouse.vx *= 0.90;
+      STATE.mouse.vy *= 0.90;
+
+      if (!STATE.mouse.down) {
+        STATE.camera.targetRotY += STATE.dt * 0.14; // Gentle auto-rotation
+      }
+      STATE.camera.rotX += (STATE.camera.targetRotX - STATE.camera.rotX) * 0.08;
+      STATE.camera.rotY += (STATE.camera.targetRotY - STATE.camera.rotY) * 0.08;
+
+      STATE.merklePulse *= 0.93;
+
+      updateAudioTelemetry();
+      renderWebGL();
+      renderSpatialCanvas();
+      renderMiniSimulation();
+
+      // Update Telemetry HUD every ~20 frames
+      frameCounter++;
+      fpsAccumulator += rawDt;
+      if (fpsAccumulator >= 0.45) {
+        const currentFps = Math.round(frameCounter / fpsAccumulator);
+        document.getElementById("telemetry-fps").textContent = `${currentFps} FPS`;
+        STATE.entropy = 7.85 + Math.sin(STATE.time * 0.9) * 0.11 + STATE.audio.bassEnergy * 0.04;
+        document.getElementById("telemetry-entropy").textContent = `${STATE.entropy.toFixed(3)} bits`;
+        document.getElementById("telemetry-freq").textContent = `${STATE.audio.lastFreq.toFixed(1)} Hz`;
+        frameCounter = 0;
+        fpsAccumulator = 0;
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    window.onload = function () {
+      resizeAllCanvases();
+      initWebGL();
+      requestAnimationFrame(animate);
+    };
+  </script>
+</body>
+</html>
